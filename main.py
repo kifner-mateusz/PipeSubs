@@ -117,6 +117,7 @@ class App(DearPyGuiWrapper):
                             pos=[self.get_size()[0]-110, self.get_size()[1]-100], callback=self.end_sorting, show=False, tag="end_sorting")
 
     def set_table_subsciptions(self, parent, clear_cache=False):
+        """ ustawia/aktualizuje dane w tablicy subscriptions w gui """
         self.dpg.delete_item(parent, children_only=True)
         self.dpg.add_table_column(label="uid / name", parent=parent)
         self.dpg.add_table_column(label="avatar", parent=parent)
@@ -152,6 +153,8 @@ class App(DearPyGuiWrapper):
                     self.dpg.add_text(default_value=sub[6])
 
     def set_table_feed_groups(self, parent, clear_cache=False):
+        """ ustawia/aktualizuje dane w tablicy feed_group w gui """
+
         self.dpg.delete_item(parent, children_only=True)
         self.dpg.add_table_column(label="uid", parent=parent)
         self.dpg.add_table_column(label="name", parent=parent)
@@ -175,6 +178,8 @@ class App(DearPyGuiWrapper):
                         label="remove", callback=self.remove_feed_group_callback, user_data=data[0])
 
     def set_table_feed_group_sub_join(self, parent, clear_cache=False):
+        """ ustawia/aktualizuje dane w tablicy feed_group_subscription_join w gui """
+
         self.dpg.delete_item(parent, children_only=True)
         self.dpg.add_table_column(label="group_id", parent=parent)
         self.dpg.add_table_column(label="subscription_id", parent=parent)
@@ -212,12 +217,14 @@ class App(DearPyGuiWrapper):
         # print(all_feed_group_subscription_join)
 
     def refresh(self, clear_cache=True):
+        """ ustawia/aktualizuje dane w tablicach w gui  """
         self.set_table_subsciptions("Subscriptions", clear_cache=clear_cache)
         self.set_table_feed_groups("Feed_groups", clear_cache=clear_cache)
         self.set_table_feed_group_sub_join(
             "Feed_group_sub_join", clear_cache=clear_cache)
 
     def update_feed_group_callback(self, sender, app_data, user_data):
+        """ callback przycisku, przygotowuje dane wiersza z feed_group do edycji """
         self.dpg.set_value("id", user_data[0])
         self.dpg.set_value("name", user_data[1])
         self.add_icon = user_data[2]
@@ -226,26 +233,30 @@ class App(DearPyGuiWrapper):
         self.dpg.configure_item("add_button", label="update")
 
     def remove_feed_group_callback(self, sender, app_data, user_data):
+        """ callback przycisku, przekazuej wiersz z feed_group do usunięcia """
         self.remove_feed_group(user_data)
 
     def add_feed_group(self, name, icon_id, sort_order=0):
+        """ dodaje wiersz do feed_group """
         self.pipeDatabase.add_row(
             "feed_group", name=name, icon_id=icon_id, sort_order=sort_order)
         self.refresh()
 
     def remove_feed_group(self, uid):
-        print(id)
+        """ usuwa wiersz z feed_group oraz wszystkie asociacje """
         self.pipeDatabase.remove_row("feed_group", uid=uid)
         self.pipeDatabase.remove_all_with(
             "feed_group_subscription_join", group_id=uid)
         self.refresh()
 
     def update_feed_group(self, uid, name, icon_id,  sort_order=0):
+        """ aktualizuje dane wiersza w feed_group """
         self.pipeDatabase.update_row(
             "feed_group", uid=uid, name=name, icon_id=icon_id, sort_order=sort_order)
         self.refresh()
 
     def add_feed_group_sub_join(self, group_id, subscription_id):
+        """ dodaje asocjacje feed_group z subscrypcją, jeśli nie istnieje """
         for fg_sub_join in self.pipeDatabase.get_data("feed_group_subscription_join"):
             if (fg_sub_join[0] == group_id and fg_sub_join[1] == subscription_id):
                 print("already added")
@@ -255,15 +266,18 @@ class App(DearPyGuiWrapper):
         # self.refresh()
 
     def remove_feed_group_sub_join_callback(self, sender, app_data, user_data):
+        """ callback przycisku, przekazuje asocjacje feed_group z subscrypcją do usunięcia """
         self.remove_feed_group_sub_join(user_data[0], user_data[1])
 
     def remove_feed_group_sub_join(self,  group_id, subscription_id):
+        """ usuwa asocjacje feed_group z subscrypcją """
         # print(group_id, subscription_id)
         self.pipeDatabase.remove_all_with(
             "feed_group_subscription_join", group_id=group_id, subscription_id=subscription_id)
         self.refresh()
 
     def change_tab(self, tag, app_data, user_data):
+        """ zmienia zakładkę w gui """
         for tab in self.tabs:
             self.dpg.configure_item(tab, show=False)
         self.dpg.configure_item(user_data, show=True)
@@ -273,12 +287,14 @@ class App(DearPyGuiWrapper):
                                 show=(user_data == "Feed_group_sub_join"))
 
     def choose_icon(self, tag, app_data, user_data):
+        """ callback przycisku, wyświetla menu do wyboru ikony """
         self.dpg.configure_item("modal_icon", show=False)
         self.add_icon = user_data
         self.dpg.configure_item(
             "icon", texture_tag=self.categories.get_category_icon(self.add_icon))
 
     def add_or_modify_feed_group(self, tag, app_data, user_data):
+        """ callback przycisku, dodaje lub modyfikuje feed_group, jest to zależne od tego czy podano id"""
         if (self.dpg.get_value("id") == ""):
             name = self.dpg.get_value("name")
             self.add_feed_group(name, self.add_icon)
@@ -294,6 +310,7 @@ class App(DearPyGuiWrapper):
             self.dpg.configure_item("add_button", label="add")
 
     def file_dialog_load(self, sender, file_data):
+        """ callback, otwiera bazę podaną z przęglądarki plików """
         # print(file_data)
         self.pipeDatabase = PipeDatabase(file_data["file_path_name"])
         self.dpg.set_value("status", file_data["file_path_name"])
@@ -305,6 +322,7 @@ class App(DearPyGuiWrapper):
         #     "feed_group_subscription_join"))
 
     def start_sorting(self, sender, app_data, user_data):
+        """ callback przycisku, rozpoczyna przydzialanie subskrybcji do grup, wyświetla wszytkie wymagane okna gui """
         self.dpg.configure_item("start_sorting", show=False)
         self.dpg.configure_item("modal_feed_buttons", show=True)
         self.dpg.configure_item("end_sorting", show=True)
@@ -324,6 +342,7 @@ class App(DearPyGuiWrapper):
         self.set_subscription_data(0)
 
     def end_sorting(self, sender, app_data, user_data):
+        """ callback przycisku, kończy przydzialanie subskrybcji do grup, zamyka wszystkie związane okna """
         self.dpg.configure_item("start_sorting", show=True)
         self.dpg.configure_item("modal_feed_buttons", show=False)
         self.dpg.configure_item("end_sorting", show=False)
@@ -331,6 +350,7 @@ class App(DearPyGuiWrapper):
         self.refresh()
 
     def sort_choose_feed(self, sender, app_data, user_data):
+        """ callback przycisku, wyświetla kolejną subskrypcję do przydzielenia do grupy """
         subscriptions = self.pipeDatabase.get_data("subscriptions")
         if str(user_data) != "skip":
             uid = subscriptions[self.current_sub][0]
@@ -343,6 +363,7 @@ class App(DearPyGuiWrapper):
             self.end_sorting("", None, None)
 
     def set_subscription_data(self, id):
+        """ funkcja pomocnicza, ustawia dane subskrypcji w gui od wyboru grupy """
         sub = self.pipeDatabase.get_data("subscriptions")[id]
         # print(sub)
         self.dpg.set_value("sub_name", sub[3])
@@ -356,7 +377,7 @@ class App(DearPyGuiWrapper):
             sub[2], self.set_subscription_data_async_callback)
 
     def set_subscription_data_async_callback(self, data):
-
+        """ callback, przyjmuje asynchronicznie dane o filmach na kanale i wyświetla listę """
         # Texture loading is not avaiable now
 
         # print("data:", data)
@@ -385,10 +406,12 @@ class App(DearPyGuiWrapper):
             self.dpg.set_value("video_title", vid_str)
 
     def open_webpage_callback(self, sender, app_data, user_data):
+        """ callback przycisku, otiera stronę internetową z kanałem """
         # print(user_data)
         self.browser.open_webpage(user_data)
 
     def __del__(self):
+        """ upewnia się że baza danych jest zamknięta """
         if self.pipeDatabase:
             self.pipeDatabase.__del__()
 
