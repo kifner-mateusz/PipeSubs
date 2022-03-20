@@ -309,9 +309,11 @@ class App(DearPyGuiWrapper):
         for fg in feed_group:
             with self.dpg.group(parent="feed_buttons"):
                 self.dpg.add_image_button(
-                    categories[fg[2]][1], callback=self.sort_choose_feed, user_data=fg[0])
+                    categories[fg[2]][1], callback=self.sort_choose_feed, user_data=fg[0], width=132)
                 self.dpg.add_button(
-                    label=fg[1], callback=self.sort_choose_feed, user_data=fg[0])
+                    label=fg[1], callback=self.sort_choose_feed, user_data=fg[0], width=140)
+        self.dpg.add_button(
+            label="Skip", callback=self.sort_choose_feed, user_data="skip", height=60, width=60, parent="feed_buttons")
         self.set_subscription_data(0)
 
     def end_sorting(self, sender, app_data, user_data):
@@ -323,9 +325,10 @@ class App(DearPyGuiWrapper):
 
     def sort_choose_feed(self, sender, app_data, user_data):
         subscriptions = self.pipeDatabase.get_data("subscriptions")
-        uid = subscriptions[self.current_sub][0]
-        # print(user_data, uid)
-        self.add_feed_group_sub_join(user_data, uid)
+        if str(user_data) != "skip":
+            uid = subscriptions[self.current_sub][0]
+            # print(user_data, uid)
+            self.add_feed_group_sub_join(user_data, uid)
         self.current_sub += 1
         if self.current_sub < len(subscriptions):
             self.set_subscription_data(self.current_sub)
