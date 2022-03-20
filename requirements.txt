@@ -1,0 +1,2 @@
+dearpygui==1.4.0
+youtube-dl>=2021.12.17
