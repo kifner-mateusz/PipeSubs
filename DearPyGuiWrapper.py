@@ -6,10 +6,12 @@ class DearPyGuiWrapper:
     """ Wrapper for dearpygui window """
 
     def __init__(self, title):
+        """ inicializacja """
         self._ready = False
         self._viewport_size = [1280, 720]
         self._title = title
         self.dpg = dpg
+        # Uruchamia funkcję blokującą _start_gui w nowy wątku
         self._gui_thread = Thread(target=self._start_gui)
         self._gui_thread.start()
         # self._del_callback = del_callback
@@ -18,6 +20,7 @@ class DearPyGuiWrapper:
             pass
 
     def _start_gui(self):
+        """ Funkcja blokująca inicializuje i startuje DearPyGui """
         self.dpg.create_context()
         self.dpg.create_viewport(
             title=self._title, width=self._viewport_size[0], height=self._viewport_size[1])
@@ -39,15 +42,19 @@ class DearPyGuiWrapper:
         self.dpg.destroy_context()
 
     def _on_resize(self, sender, app_data, user_data):
+        """ ustawia _viewport_size przy zmianie rozmiaru okna """
         self._viewport_size = (app_data[0], app_data[1])
 
     def get_size(self):
+        """ zwraca rozmiar okna """
         return self._viewport_size
 
     def get_title(self):
+        """ zwraca tytuł okna """
         return self._title
 
     def set_title(self, new_title):
+        """ ustawia tytuł okna """
         self.dpg.set_viewport_title(new_title)
         self._title = new_title
 
@@ -56,7 +63,7 @@ class DearPyGuiWrapper:
 
 
 if __name__ == "__main__":
-
+    # testy
     class TestApp(DearPyGuiWrapper):
 
         def __init__(self):

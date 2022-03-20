@@ -2,9 +2,11 @@ from PipeDatabase import PipeDatabase
 from YouTubeDL import YouTubeDL
 import requests
 import os
-from categories import categories
+from Categories import Categories
 from DearPyGuiWrapper import DearPyGuiWrapper
-import webbrowser
+from Browser import Browser
+
+# Mateusz Kifner 55547
 
 
 class App(DearPyGuiWrapper):
@@ -14,11 +16,13 @@ class App(DearPyGuiWrapper):
         self.pipeDatabase = None
         self.ytdl = YouTubeDL()
         self.debug = False
+        self.categories = Categories()
+        self.browser = Browser()
         if not(os.path.exists("./.cache")):
             os.makedirs("./.cache")
         # load icons
         with self.dpg.texture_registry():
-            for icon in categories:
+            for icon in self.categories.get_categories():
                 try:
                     width, height, channels, data = self.dpg.load_image(
                         "./FeedGroupIcons/"+icon[1])
@@ -62,7 +66,7 @@ class App(DearPyGuiWrapper):
             self.dpg.add_input_text(tag="id", width=20, enabled=False)
             self.dpg.add_input_text(tag="name", width=200, hint="Name")
             self.dpg.add_image_button(
-                categories[self.add_icon][1], tag="icon", callback=lambda: self.dpg.configure_item("modal_icon", show=True))
+                self.categories.get_category_icon(self.add_icon), tag="icon", callback=lambda: self.dpg.configure_item("modal_icon", show=True))
             # dodaje przycisk
             self.dpg.add_button(label="Add", tag="add_button",
                                 callback=self.add_or_modify_feed_group)
@@ -75,12 +79,12 @@ class App(DearPyGuiWrapper):
 
         with self.dpg.window(label="Choose icon", modal=True, show=False, id="modal_icon", no_title_bar=True):
             count = 0
-            while(count < len(categories)):
+            while(count < len(self.categories.get_categories())):
                 row = 0
                 with self.dpg.group(horizontal=True):
-                    while(row < 10 and count < len(categories)):
+                    while(row < 10 and count < len(self.categories.get_categories())):
                         self.dpg.add_image_button(
-                            categories[count][1], user_data=count, callback=self.choose_icon)
+                            self.categories.get_category_icon(count), user_data=count, callback=self.choose_icon)
                         count += 1
                         row += 1
 
@@ -90,15 +94,16 @@ class App(DearPyGuiWrapper):
                 with self.dpg.table_row():
                     self.dpg.add_text("testname", tag="sub_name")
                 with self.dpg.table_row():
-                    self.dpg.add_image(categories[0][1], tag="sub_icon")
+                    self.dpg.add_image(
+                        self.categories.get_category_icon(0), tag="sub_icon")
                 with self.dpg.table_row():
                     self.dpg.add_text("testdesc", tag="sub_desc")
                 with self.dpg.table_row():
                     self.dpg.add_button(
-                        label="Open webpage", tag="sub_button", callback=self.open_webpage, height=60, width=self.get_size()[0]-10)
+                        label="Open webpage", tag="sub_button", callback=self.open_webpage_callback, height=60, width=self.get_size()[0]-10)
                 with self.dpg.table_row():
                     self.dpg.add_text("\n\n Video titles: ")
-                    # self.dpg.add_image(categories[0][1], tag="video_thum")
+                    # self.dpg.add_image(self.categories.get_category_icon(0), tag="video_thum")
                 with self.dpg.table_row():
                     self.dpg.add_text(
                         "Loading... (30s average)", tag="video_title")
@@ -160,7 +165,8 @@ class App(DearPyGuiWrapper):
                 with self.dpg.table_cell():
                     self.dpg.add_text(data[1])
                 with self.dpg.table_cell():
-                    self.dpg.add_image(categories[data[2]][1])
+                    self.dpg.add_image(
+                        self.categories.get_category_icon(data[2]))
                 with self.dpg.table_cell():
                     self.dpg.add_button(
                         label="update", callback=self.update_feed_group_callback, user_data=data)
@@ -184,7 +190,8 @@ class App(DearPyGuiWrapper):
             with self.dpg.table_row(parent=parent):
                 with self.dpg.table_cell():
                     self.dpg.add_text(fg[1])
-                    self.dpg.add_image(categories[fg[2]][1])
+                    self.dpg.add_image(
+                        self.categories.get_category_icon(fg[2]))
                 with self.dpg.table_cell():
                     for data in feed_group_subscription_join:
                         if (data[0] == fg[0]):
@@ -215,7 +222,7 @@ class App(DearPyGuiWrapper):
         self.dpg.set_value("name", user_data[1])
         self.add_icon = user_data[2]
         self.dpg.configure_item(
-            "icon", texture_tag=categories[self.add_icon][1])
+            "icon", texture_tag=self.categories.get_category_icon(self.add_icon))
         self.dpg.configure_item("add_button", label="update")
 
     def remove_feed_group_callback(self, sender, app_data, user_data):
@@ -269,7 +276,7 @@ class App(DearPyGuiWrapper):
         self.dpg.configure_item("modal_icon", show=False)
         self.add_icon = user_data
         self.dpg.configure_item(
-            "icon", texture_tag=categories[self.add_icon][1])
+            "icon", texture_tag=self.categories.get_category_icon(self.add_icon))
 
     def add_or_modify_feed_group(self, tag, app_data, user_data):
         if (self.dpg.get_value("id") == ""):
@@ -283,7 +290,7 @@ class App(DearPyGuiWrapper):
             self.dpg.set_value("name", "")
             self.add_icon = 0
             self.dpg.configure_item(
-                "icon", texture_tag=categories[self.add_icon][1])
+                "icon", texture_tag=self.categories.get_category_icon(self.add_icon))
             self.dpg.configure_item("add_button", label="add")
 
     def file_dialog_load(self, sender, file_data):
@@ -309,7 +316,7 @@ class App(DearPyGuiWrapper):
         for fg in feed_group:
             with self.dpg.group(parent="feed_buttons"):
                 self.dpg.add_image_button(
-                    categories[fg[2]][1], callback=self.sort_choose_feed, user_data=fg[0], width=132)
+                    self.categories.get_category_icon(fg[2]), callback=self.sort_choose_feed, user_data=fg[0], width=132)
                 self.dpg.add_button(
                     label=fg[1], callback=self.sort_choose_feed, user_data=fg[0], width=140)
         self.dpg.add_button(
@@ -349,6 +356,9 @@ class App(DearPyGuiWrapper):
             sub[2], self.set_subscription_data_async_callback)
 
     def set_subscription_data_async_callback(self, data):
+
+        # Texture loading is not avaiable now
+
         # print("data:", data)
         # video_data = data[0]
         # if not(os.path.exists("./.cache/"+video_data["title"]+".jpg")):
@@ -374,9 +384,9 @@ class App(DearPyGuiWrapper):
                 vid_str += vid["title"]+"\n"
             self.dpg.set_value("video_title", vid_str)
 
-    def open_webpage(self, sender, app_data, user_data):
+    def open_webpage_callback(self, sender, app_data, user_data):
         # print(user_data)
-        webbrowser.get().open(user_data, new=2)
+        self.browser.open_webpage(user_data)
 
     def __del__(self):
         if self.pipeDatabase:
