@@ -13,7 +13,7 @@ class App(DearPyGuiWrapper):
         super().__init__("PipeSubs")
         self.pipeDatabase = None
         self.ytdl = YouTubeDL()
-        self.debug = True
+        self.debug = False
         if not(os.path.exists("./.cache")):
             os.makedirs("./.cache")
         # load icons
@@ -176,7 +176,9 @@ class App(DearPyGuiWrapper):
         feed_group_subscription_join = self.pipeDatabase.get_data(
             "feed_group_subscription_join", clear_cache=clear_cache)
         subscriptions = self.pipeDatabase.get_data("subscriptions")
-
+        # print("sub: ", subscriptions)
+        # print("feed_group: ", feed_group)
+        # print("feed_group_subscription_join: ", feed_group_subscription_join)
         all_feed_group_subscription_join = []
         for fg in feed_group:
             with self.dpg.table_row(parent=parent):
@@ -191,7 +193,8 @@ class App(DearPyGuiWrapper):
                                 if (s[0] == data[1]):
                                     all_feed_group_subscription_join.append(
                                         s[0])
-                                    self.dpg.add_text(s[3])
+                                    self.dpg.add_button(
+                                        label=s[3]+" (click to remove)", callback=self.remove_feed_group_sub_join_callback, user_data=(data[0], data[1]))
         with self.dpg.table_row(parent=parent):
             with self.dpg.table_cell():
                 self.dpg.add_text("NOT GROUPED")
@@ -199,6 +202,7 @@ class App(DearPyGuiWrapper):
                 for sub in subscriptions:
                     if not sub[0] in all_feed_group_subscription_join:
                         self.dpg.add_text(sub[3])
+        # print(all_feed_group_subscription_join)
 
     def refresh(self, clear_cache=True):
         self.set_table_subsciptions("Subscriptions", clear_cache=clear_cache)
@@ -234,6 +238,24 @@ class App(DearPyGuiWrapper):
             "feed_group", uid=uid, name=name, icon_id=icon_id, sort_order=sort_order)
         self.refresh()
 
+    def add_feed_group_sub_join(self, group_id, subscription_id):
+        for fg_sub_join in self.pipeDatabase.get_data("feed_group_subscription_join"):
+            if (fg_sub_join[0] == group_id and fg_sub_join[1] == subscription_id):
+                print("already added")
+                return
+        self.pipeDatabase.add_row(
+            "feed_group_subscription_join", group_id=group_id, subscription_id=subscription_id)
+        # self.refresh()
+
+    def remove_feed_group_sub_join_callback(self, sender, app_data, user_data):
+        self.remove_feed_group_sub_join(user_data[0], user_data[1])
+
+    def remove_feed_group_sub_join(self,  group_id, subscription_id):
+        # print(group_id, subscription_id)
+        self.pipeDatabase.remove_all_with(
+            "feed_group_subscription_join", group_id=group_id, subscription_id=subscription_id)
+        self.refresh()
+
     def change_tab(self, tag, app_data, user_data):
         for tab in self.tabs:
             self.dpg.configure_item(tab, show=False)
@@ -265,21 +287,24 @@ class App(DearPyGuiWrapper):
             self.dpg.configure_item("add_button", label="add")
 
     def file_dialog_load(self, sender, file_data):
-        print(file_data)
+        # print(file_data)
         self.pipeDatabase = PipeDatabase(file_data["file_path_name"])
         self.dpg.set_value("status", file_data["file_path_name"])
         self.refresh()
         #print("tables: ", self.pipeDatabase.get_tables())
-        print("subscriptions: ", self.pipeDatabase.get_columns("Subscriptions"))
+        # print("subscriptions: ", self.pipeDatabase.get_columns("Subscriptions"))
         # print("feed_groups: ", self.pipeDatabase.get_columns("feed_group"))
         # print("feed_groups_sub_join: ", self.pipeDatabase.get_columns(
-        #    "feed_group_subscription_join"))
+        #     "feed_group_subscription_join"))
 
     def start_sorting(self, sender, app_data, user_data):
         self.dpg.configure_item("start_sorting", show=False)
         self.dpg.configure_item("modal_feed_buttons", show=True)
         self.dpg.configure_item("end_sorting", show=True)
         self.dpg.configure_item("modal_feed", show=True)
+        self.current_sub = 0
+        self.dpg.delete_item("feed_buttons", children_only=True)
+
         feed_group = self.pipeDatabase.get_data("feed_group")
         for fg in feed_group:
             with self.dpg.group(parent="feed_buttons"):
@@ -290,27 +315,35 @@ class App(DearPyGuiWrapper):
         self.set_subscription_data(0)
 
     def end_sorting(self, sender, app_data, user_data):
-        print("NOT implemented")
+        self.dpg.configure_item("start_sorting", show=True)
+        self.dpg.configure_item("modal_feed_buttons", show=False)
+        self.dpg.configure_item("end_sorting", show=False)
+        self.dpg.configure_item("modal_feed", show=False)
+        self.refresh()
 
     def sort_choose_feed(self, sender, app_data, user_data):
-
-        print(user_data)
-        pass
+        subscriptions = self.pipeDatabase.get_data("subscriptions")
+        uid = subscriptions[self.current_sub][0]
+        # print(user_data, uid)
+        self.add_feed_group_sub_join(user_data, uid)
+        self.current_sub += 1
+        if self.current_sub < len(subscriptions):
+            self.set_subscription_data(self.current_sub)
+        else:
+            self.end_sorting("", None, None)
 
     def set_subscription_data(self, id):
         sub = self.pipeDatabase.get_data("subscriptions")[id]
-        print(sub)
+        # print(sub)
         self.dpg.set_value("sub_name", sub[3])
         self.dpg.configure_item(
             "sub_icon", texture_tag=sub[3]+"_image")
         self.dpg.set_value("sub_desc", sub[6])
         self.dpg.configure_item("sub_desc", wrap=self.get_size()[0]-20)
         self.dpg.configure_item("sub_button", user_data=sub[2])
-        print()
-        print()
-        print()
-        print(self.ytdl.get_channel_data_callback_async(
-            sub[2], self.set_subscription_data_async_callback))
+
+        self.ytdl.get_channel_data_callback_async(
+            sub[2], self.set_subscription_data_async_callback)
 
     def set_subscription_data_async_callback(self, data):
         # print("data:", data)

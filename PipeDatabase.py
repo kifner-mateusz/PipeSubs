@@ -79,9 +79,9 @@ class PipeDatabase:
         for key, value in kwargs.items():
             if key != "uid":
                 val_str = str(value)
-                query += f"{key} = \"{val_str}\","
+                query += f"{key} = \"{val_str}\" AND "
 
-        query = query[:-1]
+        query = query[:-4]
         sql = f"DELETE FROM {table_name} WHERE {query}"
         print(sql)
         self.cursor.execute(sql)
@@ -101,7 +101,7 @@ class PipeDatabase:
         query = query[:-1]
 
         sql = f"UPDATE {table_name} SET {query} WHERE uid = ?"
-        print(sql)
+        # print(sql)
         self.cursor.execute(sql, (str(kwargs["uid"])))
         self.conn.commit()
 

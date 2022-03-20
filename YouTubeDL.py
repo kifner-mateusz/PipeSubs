@@ -72,39 +72,40 @@ class YouTubeDL:
             result = ytdl.extract_info(
                 url
             )
-            channel_data = {"title": result["title"], 'entries': []}
-            try:
-                if "entries" in result:
-                    for entry in result["entries"]:
-                        if "entries" in entry:
-                            for entry2 in entry["entries"]:
-                                if "thumbnails" in entry2:
-                                    for thum in entry2["thumbnails"]:
-                                        if (thum["height"] == 188):
-                                            with self.lock:
-                                                channel_data["entries"].append({
-                                                    "title": entry2["title"], "thumbnail": thum["url"]
-                                                })
-                                            break
-                                elif "entries" in entry2:
-                                    for entry3 in entry2["entries"]:
-                                        if "thumbnails" in entry3:
-                                            for thum in entry3["thumbnails"]:
-                                                if (thum["height"] == 188):
-                                                    with self.lock:
-                                                        channel_data["entries"].append({
-                                                            "title": entry2["title"], "thumbnail": thum["url"]
-                                                        })
-                                                    break
-            except:
-                pass
+            if result:
+                channel_data = {"title": result["title"], 'entries': []}
+                try:
+                    if "entries" in result:
+                        for entry in result["entries"]:
+                            if "entries" in entry:
+                                for entry2 in entry["entries"]:
+                                    if "thumbnails" in entry2:
+                                        for thum in entry2["thumbnails"]:
+                                            if (thum["height"] == 188):
+                                                with self.lock:
+                                                    channel_data["entries"].append({
+                                                        "title": entry2["title"], "thumbnail": thum["url"]
+                                                    })
+                                                break
+                                    elif "entries" in entry2:
+                                        for entry3 in entry2["entries"]:
+                                            if "thumbnails" in entry3:
+                                                for thum in entry3["thumbnails"]:
+                                                    if (thum["height"] == 188):
+                                                        with self.lock:
+                                                            channel_data["entries"].append({
+                                                                "title": entry2["title"], "thumbnail": thum["url"]
+                                                            })
+                                                        break
+                except:
+                    pass
 
-            callback(channel_data)
+                callback(channel_data)
             return
 
     def remove_stopped_threads(self):
         for i in range(len(self.threads)):
-            if not(self.threads[i].is_alive()):
+            if self.threads[i] and not(self.threads[i].is_alive()):
                 # del self.threads[i]
                 self.threads[i] = None
 
