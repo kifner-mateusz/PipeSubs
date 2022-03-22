@@ -6,8 +6,6 @@ from Categories import Categories
 from DearPyGuiWrapper import DearPyGuiWrapper
 from Browser import Browser
 
-# Mateusz Kifner 55547
-
 
 class App(DearPyGuiWrapper):
 
