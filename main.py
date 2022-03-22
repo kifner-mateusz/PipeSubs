@@ -88,7 +88,7 @@ class App(DearPyGuiWrapper):
                         count += 1
                         row += 1
 
-        with self.dpg.window(label="Choose feed", show=False, id="modal_feed", height=self.get_size()[1]-100, width=self.get_size()[0], pos=[0, 0], no_move=True, no_resize=True, no_title_bar=True):
+        with self.dpg.window(label="Choose feed", show=False, id="modal_feed", height=self.get_size()[1]-130, width=self.get_size()[0], pos=[0, 0], no_move=True, no_resize=True, no_title_bar=True):
             with self.dpg.table(policy=self.dpg.mvTable_SizingFixedFit, tag="modal_feed_table",  borders_innerH=True, borders_outerH=True, borders_innerV=True, borders_outerV=True, header_row=False):
                 self.dpg.add_table_column()
                 with self.dpg.table_row():
@@ -102,13 +102,13 @@ class App(DearPyGuiWrapper):
                     self.dpg.add_button(
                         label="Open webpage", tag="sub_button", callback=self.open_webpage_callback, height=60, width=self.get_size()[0]-10)
                 with self.dpg.table_row():
-                    self.dpg.add_text("\n\n Video titles: ")
+                    self.dpg.add_text("\n\n  ")
                     # self.dpg.add_image(self.categories.get_category_icon(0), tag="video_thum")
                 with self.dpg.table_row():
                     self.dpg.add_text(
-                        "Loading... (30s average)", tag="video_title")
+                        "", tag="video_title")
 
-        with self.dpg.window(label="Choose feed buttons", show=False, id="modal_feed_buttons", height=100, width=self.get_size()[0]-110, pos=[0, self.get_size()[1]-100], no_move=True, no_resize=True, no_title_bar=True):
+        with self.dpg.window(label="Choose feed buttons", show=False, id="modal_feed_buttons", height=120, width=self.get_size()[0]-110, pos=[0, self.get_size()[1]-130], no_move=True, no_resize=True, no_title_bar=True):
             self.dpg.add_group(horizontal=True, tag="feed_buttons")
 
         self.dpg.add_button(parent="Window", label="Start Sorting", height=60, width=110,
