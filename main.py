@@ -99,6 +99,8 @@ class App(DearPyGuiWrapper):
                 with self.dpg.table_row():
                     self.dpg.add_text("testdesc", tag="sub_desc")
                 with self.dpg.table_row():
+                    self.dpg.add_text("", tag="sub_group")
+                with self.dpg.table_row():
                     self.dpg.add_button(
                         label="Open webpage", tag="sub_button", callback=self.open_webpage_callback, height=60, width=self.get_size()[0]-10)
                 with self.dpg.table_row():
@@ -324,9 +326,13 @@ class App(DearPyGuiWrapper):
     def start_sorting(self, sender, app_data, user_data):
         """ callback przycisku, rozpoczyna przydzialanie subskrybcji do grup, wyświetla wszytkie wymagane okna gui """
         self.dpg.configure_item("start_sorting", show=False)
-        self.dpg.configure_item("modal_feed_buttons", show=True)
+        self.dpg.configure_item("modal_feed_buttons", show=True, height=100, width=self.get_size()[
+                                0]-110, pos=[0, self.get_size()[1]-100])
         self.dpg.configure_item("end_sorting", show=True)
-        self.dpg.configure_item("modal_feed", show=True)
+        self.dpg.configure_item("modal_feed", show=True, height=self.get_size()[
+                                1]-100, width=self.get_size()[0], pos=[0, 0])
+        # self.dpg.configure_item("modal_feed", show=True)
+
         self.current_sub = 0
         self.dpg.delete_item("feed_buttons", children_only=True)
 
@@ -334,9 +340,9 @@ class App(DearPyGuiWrapper):
         for fg in feed_group:
             with self.dpg.group(parent="feed_buttons"):
                 self.dpg.add_image_button(
-                    self.categories.get_category_icon(fg[2]), callback=self.sort_choose_feed, user_data=fg[0], width=132)
+                    self.categories.get_category_icon(fg[2]), callback=self.sort_choose_feed, user_data=fg[0], width=92)
                 self.dpg.add_button(
-                    label=fg[1], callback=self.sort_choose_feed, user_data=fg[0], width=140)
+                    label=fg[1], callback=self.sort_choose_feed, user_data=fg[0], width=100)
         self.dpg.add_button(
             label="Skip", callback=self.sort_choose_feed, user_data="skip", height=60, width=60, parent="feed_buttons")
         self.set_subscription_data(0)
@@ -351,6 +357,7 @@ class App(DearPyGuiWrapper):
 
     def sort_choose_feed(self, sender, app_data, user_data):
         """ callback przycisku, wyświetla kolejną subskrypcję do przydzielenia do grupy """
+        self.dpg.set_value("video_title", "")
         subscriptions = self.pipeDatabase.get_data("subscriptions")
         if str(user_data) != "skip":
             uid = subscriptions[self.current_sub][0]
@@ -375,6 +382,15 @@ class App(DearPyGuiWrapper):
 
         self.ytdl.get_channel_data_callback_async(
             sub[2], self.set_subscription_data_async_callback)
+        feed_group = self.pipeDatabase.get_data("feed_group")
+        group_str = ""
+        for sub_join in self.pipeDatabase.get_data(
+                "feed_group_subscription_join"):
+            if sub_join[1] == sub[0]:
+                for fg in feed_group:
+                    if fg[0] == sub_join[0]:
+                        group_str += fg[1]+"\n"
+        self.dpg.set_value("sub_group", group_str)
 
     def set_subscription_data_async_callback(self, data):
         """ callback, przyjmuje asynchronicznie dane o filmach na kanale i wyświetla listę """
