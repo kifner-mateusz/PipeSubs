@@ -5,6 +5,7 @@ import os
 from Categories import Categories
 from DearPyGuiWrapper import DearPyGuiWrapper
 from Browser import Browser
+import pyperclip
 
 
 class App(DearPyGuiWrapper):
@@ -30,7 +31,8 @@ class App(DearPyGuiWrapper):
                     if self.debug:
                         print("loading icon "+icon[0]+" failed ("+icon[1]+")")
 
-        self.tabs = ("Subscriptions", "Feed_groups", "Feed_group_sub_join")
+        self.tabs = ("Subscriptions", "Feed_groups",
+                     "Feed_group_sub_join", "Playlists", "Playlist_stream_join", "Streams")
         self.add_icon = 0
         self.current_sub = 0
         with self.dpg.menu_bar(parent="Window"):
@@ -48,6 +50,12 @@ class App(DearPyGuiWrapper):
                                 user_data="Feed_groups")
             self.dpg.add_button(label="Feed groups sub join", callback=self.change_tab,
                                 user_data="Feed_group_sub_join")
+            self.dpg.add_button(label="Playlists", callback=self.change_tab,
+                                user_data="Playlists")
+            self.dpg.add_button(label="Playlist_stream_join", callback=self.change_tab,
+                                user_data="Playlist_stream_join")
+            self.dpg.add_button(label="Streams", callback=self.change_tab,
+                                user_data="Streams")
 
         # dodaj table z danymi
         with self.dpg.group(parent="Window"):
@@ -56,6 +64,12 @@ class App(DearPyGuiWrapper):
             self.dpg.add_table(header_row=True, policy=self.dpg.mvTable_SizingFixedFit, tag="Feed_groups",
                                borders_innerH=True, borders_outerH=True, borders_innerV=True, borders_outerV=True, show=False)
             self.dpg.add_table(header_row=True, policy=self.dpg.mvTable_SizingFixedFit, tag="Feed_group_sub_join",
+                               borders_innerH=True, borders_outerH=True, borders_innerV=True, borders_outerV=True, show=False)
+            self.dpg.add_table(header_row=True, policy=self.dpg.mvTable_SizingFixedFit, tag="Playlists",
+                               borders_innerH=True, borders_outerH=True, borders_innerV=True, borders_outerV=True, show=False)
+            self.dpg.add_table(header_row=True, policy=self.dpg.mvTable_SizingFixedFit, tag="Playlist_stream_join",
+                               borders_innerH=True, borders_outerH=True, borders_innerV=True, borders_outerV=True, show=False)
+            self.dpg.add_table(header_row=True, policy=self.dpg.mvTable_SizingFixedFit, tag="Streams",
                                borders_innerH=True, borders_outerH=True, borders_innerV=True, borders_outerV=True, show=False)
 
             # grupa z polami tekstowymi do modyfikacji i dodawania nowych wierszy pod tabelą
@@ -102,7 +116,7 @@ class App(DearPyGuiWrapper):
                     self.dpg.add_button(
                         label="Open webpage", tag="sub_button", callback=self.open_webpage_callback, height=60, width=self.get_size()[0]-10)
                 with self.dpg.table_row():
-                    self.dpg.add_text("\n\n  ")
+                    self.dpg.add_text("\n\nTitles of videos  ")
                     # self.dpg.add_image(self.categories.get_category_icon(0), tag="video_thum")
                 with self.dpg.table_row():
                     self.dpg.add_text(
@@ -187,9 +201,6 @@ class App(DearPyGuiWrapper):
         feed_group_subscription_join = self.pipeDatabase.get_data(
             "feed_group_subscription_join", clear_cache=clear_cache)
         subscriptions = self.pipeDatabase.get_data("subscriptions")
-        # print("sub: ", subscriptions)
-        # print("feed_group: ", feed_group)
-        # print("feed_group_subscription_join: ", feed_group_subscription_join)
         all_feed_group_subscription_join = []
         for fg in feed_group:
             with self.dpg.table_row(parent=parent):
@@ -216,12 +227,57 @@ class App(DearPyGuiWrapper):
                         self.dpg.add_text(sub[3])
         # print(all_feed_group_subscription_join)
 
+    def set_table_playlists(self, parent, clear_cache=False):
+        self.dpg.delete_item(parent, children_only=True)
+        self.dpg.add_table_column(label="uid", parent=parent)
+        self.dpg.add_table_column(label="name", parent=parent)
+        self.dpg.add_table_column(label="urls", parent=parent)
+        streams = self.pipeDatabase.get_data("streams")
+        playlist_stream_join = self.pipeDatabase.get_data(
+            "playlist_stream_join")
+        for data in self.pipeDatabase.get_data("playlists"):
+            with self.dpg.table_row(parent=parent):
+                with self.dpg.table_cell():
+                    self.dpg.add_text(data[0])
+                with self.dpg.table_cell():
+                    self.dpg.add_text(data[1])
+                with self.dpg.table_cell():
+                    videos_str = ""
+                    for join_stream in playlist_stream_join:
+                        if (data[0] == join_stream[0]):
+                            for st in streams:
+                                if (join_stream[1] == st[0]):
+                                    videos_str += st[2] + "\n"
+                    self.dpg.add_button(
+                        label="copy to clipboard", callback=self.copy_to_clipboard, user_data=videos_str)
+                    self.dpg.add_text(videos_str)
+
+    def set_table(self, parent, table_name, clear_cache=False):
+        self.dpg.delete_item(parent, children_only=True)
+        for column in self.pipeDatabase.get_columns(table_name):
+            self.dpg.add_table_column(label=column[1], parent=parent)
+        for data in self.pipeDatabase.get_data(table_name, clear_cache=clear_cache):
+            with self.dpg.table_row(parent=parent):
+                for d in data:
+                    with self.dpg.table_cell():
+                        if type(d) == str and d.startswith("http"):
+                            self.dpg.add_button(
+                                label="url", user_data=d, callback=self.open_webpage_callback)
+                        else:
+                            self.dpg.add_text(d)
+
     def refresh(self, clear_cache=True):
         """ ustawia/aktualizuje dane w tablicach w gui  """
         self.set_table_subsciptions("Subscriptions", clear_cache=clear_cache)
         self.set_table_feed_groups("Feed_groups", clear_cache=clear_cache)
         self.set_table_feed_group_sub_join(
             "Feed_group_sub_join", clear_cache=clear_cache)
+        self.set_table_playlists(
+            "Playlists", clear_cache=clear_cache)
+        self.set_table(
+            "Playlist_stream_join", "playlist_stream_join", clear_cache=clear_cache)
+        self.set_table(
+            "Streams", "streams", clear_cache=clear_cache)
 
     def update_feed_group_callback(self, sender, app_data, user_data):
         """ callback przycisku, przygotowuje dane wiersza z feed_group do edycji """
@@ -315,11 +371,18 @@ class App(DearPyGuiWrapper):
         self.pipeDatabase = PipeDatabase(file_data["file_path_name"])
         self.dpg.set_value("status", file_data["file_path_name"])
         self.refresh()
-        #print("tables: ", self.pipeDatabase.get_tables())
-        # print("subscriptions: ", self.pipeDatabase.get_columns("Subscriptions"))
-        # print("feed_groups: ", self.pipeDatabase.get_columns("feed_group"))
-        # print("feed_groups_sub_join: ", self.pipeDatabase.get_columns(
-        #     "feed_group_subscription_join"))
+        print("tables: ", self.pipeDatabase.get_tables(), "\n")
+        print("subscriptions: ", self.pipeDatabase.get_columns(
+            "Subscriptions"), "\n")
+        print("feed_groups: ", self.pipeDatabase.get_columns("feed_group"), "\n")
+        print("feed_groups_sub_join: ", self.pipeDatabase.get_columns(
+            "feed_group_subscription_join"), "\n")
+        print("playlists: ", self.pipeDatabase.get_columns(
+            "playlists"), "\n")
+        print("playlist_stream_join: ", self.pipeDatabase.get_columns(
+            "playlist_stream_join"), "\n")
+        print("streams: ", self.pipeDatabase.get_columns(
+            "streams"), "\n")
 
     def start_sorting(self, sender, app_data, user_data):
         """ callback przycisku, rozpoczyna przydzialanie subskrybcji do grup, wyświetla wszytkie wymagane okna gui """
@@ -378,8 +441,20 @@ class App(DearPyGuiWrapper):
         self.dpg.configure_item("sub_desc", wrap=self.get_size()[0]-20)
         self.dpg.configure_item("sub_button", user_data=sub[2])
 
-        self.ytdl.get_channel_data_callback_async(
-            sub[2], self.set_subscription_data_async_callback)
+        # self.ytdl.get_channel_data_callback_async(
+        #     sub[2], self.set_subscription_data_async_callback)
+
+        count = 0
+        videos_str = ""
+        streams = self.pipeDatabase.get_data("streams")
+        for stream in streams:
+            if (sub[3] == stream[6]):
+                videos_str += stream[3] + "\n"
+                if (count > 10):
+                    break
+                count += 1
+        self.dpg.set_value("video_title", videos_str)
+
         feed_group = self.pipeDatabase.get_data("feed_group")
         group_str = ""
         for sub_join in self.pipeDatabase.get_data(
@@ -390,39 +465,42 @@ class App(DearPyGuiWrapper):
                         group_str += fg[1]+"\n"
         self.dpg.set_value("sub_group", group_str)
 
-    def set_subscription_data_async_callback(self, data):
-        """ callback, przyjmuje asynchronicznie dane o filmach na kanale i wyświetla listę """
-        # Texture loading is not avaiable now
+    # def set_subscription_data_async_callback(self, data):
+    #     """ callback, przyjmuje asynchronicznie dane o filmach na kanale i wyświetla listę """
+    #     # Texture loading is not avaiable now
 
-        # print("data:", data)
-        # video_data = data[0]
-        # if not(os.path.exists("./.cache/"+video_data["title"]+".jpg")):
-        #     if self.debug:
-        #         print("not in cashe: ", video_data["title"])
-        #     with open("./.cache/"+video_data["title"]+".jpg", 'wb') as f:
-        #         f.write(requests.get(video_data["thumbnail"]).content)
-        # # try:
-        # width, height, channels, img_data = self.dpg.load_image(
-        #     "./.cache/"+video_data["title"]+".jpg")
+    #     # print("data:", data)
+    #     # video_data = data[0]
+    #     # if not(os.path.exists("./.cache/"+video_data["title"]+".jpg")):
+    #     #     if self.debug:
+    #     #         print("not in cashe: ", video_data["title"])
+    #     #     with open("./.cache/"+video_data["title"]+".jpg", 'wb') as f:
+    #     #         f.write(requests.get(video_data["thumbnail"]).content)
+    #     # # try:
+    #     # width, height, channels, img_data = self.dpg.load_image(
+    #     #     "./.cache/"+video_data["title"]+".jpg")
 
-        # with self.dpg.texture_registry():
-        #     self.dpg.add_static_texture(
-        #         width, height, img_data, tag=video_data["title"]+"_image")
-        # self.dpg.configure_item(
-        #     "video_thum", texture_tag=video_data["title"]+"_image")
-        # # except:
-        # #     if self.debug:
-        # #         print("loading image for "+video_data["title"]+" failed")
-        if (data["title"].startswith(self.dpg.get_value("sub_name"))):
-            vid_str = ""
-            for vid in data["entries"]:
-                vid_str += vid["title"]+"\n"
-            self.dpg.set_value("video_title", vid_str)
+    #     # with self.dpg.texture_registry():
+    #     #     self.dpg.add_static_texture(
+    #     #         width, height, img_data, tag=video_data["title"]+"_image")
+    #     # self.dpg.configure_item(
+    #     #     "video_thum", texture_tag=video_data["title"]+"_image")
+    #     # # except:
+    #     # #     if self.debug:
+    #     # #         print("loading image for "+video_data["title"]+" failed")
+    #     if (data["title"].startswith(self.dpg.get_value("sub_name"))):
+    #         vid_str = ""
+    #         for vid in data["entries"]:
+    #             vid_str += vid["title"]+"\n"
+    #         self.dpg.set_value("video_title", vid_str)
 
     def open_webpage_callback(self, sender, app_data, user_data):
         """ callback przycisku, otiera stronę internetową z kanałem """
         # print(user_data)
         self.browser.open_webpage(user_data)
+
+    def copy_to_clipboard(self, sender, app_data, user_data):
+        pyperclip.copy(user_data)
 
     def __del__(self):
         """ upewnia się że baza danych jest zamknięta """

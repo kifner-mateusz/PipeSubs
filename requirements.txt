@@ -2,3 +2,4 @@ dearpygui==1.4.0
 requests==2.27.1
 urllib3==1.26.8
 youtube-dl==2021.12.17
+pyperclip==1.8.2

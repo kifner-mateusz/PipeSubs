@@ -20,7 +20,7 @@ class PipeDatabase:
 
     def get_data(self, table_name, clear_cache=False):
         """ zwraca dane z podanej tablicy, domyślnie cacheuje dane """
-        if clear_cache:
+        if clear_cache or not(table_name in self.cache):
             self.cursor.execute(f"SELECT * FROM {table_name}")
             self.cache[table_name] = self.cursor.fetchall()
 
