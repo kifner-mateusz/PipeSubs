@@ -232,6 +232,7 @@ class App(DearPyGuiWrapper):
         self.dpg.add_table_column(label="uid", parent=parent)
         self.dpg.add_table_column(label="name", parent=parent)
         self.dpg.add_table_column(label="urls", parent=parent)
+        self.dpg.add_table_column(label="thumbnail", parent=parent)
         streams = self.pipeDatabase.get_data("streams")
         playlist_stream_join = self.pipeDatabase.get_data(
             "playlist_stream_join")
@@ -251,6 +252,11 @@ class App(DearPyGuiWrapper):
                     self.dpg.add_button(
                         label="copy to clipboard", callback=self.copy_to_clipboard, user_data=videos_str)
                     self.dpg.add_text(videos_str)
+
+                with self.dpg.table_cell():
+                    self.dpg.add_button(
+                        label=data[2], callback=self.copy_to_clipboard, user_data=data[2])
+                    # self.dpg.add_text(data[2])
 
     def set_table(self, parent, table_name, clear_cache=False):
         self.dpg.delete_item(parent, children_only=True)
