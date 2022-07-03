@@ -1,8 +1,9 @@
 # PipeSubs
 
 Feed group manager for NewPipe.
+![Subs](.github/PipeSubs.png)
 
-### binaries can be found [here](https://github.com/kifner-mateusz/PipeSubs/releases) 
+### binaries can be found [here](https://github.com/kifner-mateusz/PipeSubs/releases)
 
 ### manual installation
 
@@ -31,3 +32,6 @@ Feed group manager for NewPipe.
 - When you are done repack your database as zip(make sure that files are at root of zip)
 - Send it to Phone
 - Import database (Settings > Content > Import database)
+
+![Subs](.github/PipeSubs2.png)
+![Subs](.github/PipeSubs3.png)
