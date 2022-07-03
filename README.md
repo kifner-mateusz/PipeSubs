@@ -2,7 +2,9 @@
 
 Feed group manager for NewPipe.
 
-### installation
+### binaries can be found [here](https://github.com/kifner-mateusz/PipeSubs/releases) 
+
+### manual installation
 
 - Make venv with python `python3 -m venv env`
 - Activate venv `source env/bin/activate`
