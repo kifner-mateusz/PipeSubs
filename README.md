@@ -12,13 +12,6 @@ Feed group manager for NewPipe.
 - Install dependencies `pip install -r requirements.txt`
 - Run app `python3 main.py`
 
-### mini testowy manual
-
-- otwóż bazę danych w `test database/newpipe.db` urzywająć przycisku load(lewy górny róg)
-- zakładka subscriptions wyświetla zapisane subskrypcje
-- zakładka feed groups zawiera grupy subskrypcji
-- zakładka feed groups sub join zawiera grupy z przypisanymi do nich subskrypcjami
-- przycisk start sorting (lewy górny róg zakładki feed groups sub join) włącza sortowanie, subskrypcje będą się wyświetlać po kolei i po naciśnięciu przycików na dole ekranu zostaną przypisane do grupy
 
 ### Full manual
 
